@@ -18,6 +18,11 @@ using DirectShowLib;
 using System.IO;
 using System.Threading;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Globalization;
+using System.Net.Http.Handlers;
+using VisioForge.MediaFramework.ONVIF;
 
 namespace WindowsFormsApp1
 {
@@ -27,7 +32,7 @@ namespace WindowsFormsApp1
         private DsDevice[] webCams = null;
         private int selectedCameraId = 0;
         private string filename = "output.mp4";
-        private string filename_output=null;
+        private string filename_output = null;
         int backend_idx = 0;
         int fourcc = 0;
         VideoWriter vw;
@@ -37,23 +42,133 @@ namespace WindowsFormsApp1
             InitializeComponent();
         }
 
-        private void video_load(string filename,string http)
+
+        private async void video_load(string filename, string http)
         {
-            WebClient wc = new WebClient();
-            //wc.Headers.Add("Content-Type", "binary/octet-stream");
-            Uri uri = new Uri(http);
-            wc.UploadFile(uri,filename);
-            //string uri = http;
-            //string localPath = filename;
-            //using (var client = new WebClient())
+            //using (HttpClient client = new HttpClient())
             //{
-            //    client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-            //    var responseBytes = client.UploadFile(uri, localPath);
-            //    var response = Encoding.UTF8.GetString(responseBytes);
+            //    HttpRequestMessage message = new HttpRequestMessage();
+            //    message.Method = HttpMethod.Post;
+            //    message.RequestUri = new Uri(http);
+            //    //message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+
+
+            //    var content =
+            //        new MultipartFormDataContent("Upload----" + DateTime.Now.ToString(CultureInfo.InvariantCulture));
+
+
+            //    var streamContent = new StreamContent(File.OpenRead(filename));
+            //    streamContent.Headers.ContentType = new MediaTypeHeaderValue("video/mp4");
+            //    content.Add(streamContent, Path.GetFileName(filename), Path.GetFileName(filename));
+            //    message.Content = content;
+
+            //    var response =
+            //        await client.SendAsync(message);
+            //    MessageBox.Show(response.ToString());
+            //
+            //if (response.IsSuccessStatusCode)
+            //{
+            //    return await response.Content.ReadAsStringAsync();
+
             //}
+            //else
+            //{
+            //    throw new ApplicationException($"{response.StatusCode} {response.ReasonPhrase}");
+            //}
+            //-------------------------------------------------------------------------------------------------------------------
+            //}
+            ////var files = new List<string>();
+
+            ////files.Add(@"c:\temp\midi.xml");
+            ////files.Add(@"c:\temp\maxi.xml");
+            ////files.Add(@"c:\temp\efti.xml");
+            //var file = new FileStream(filename, FileMode.Open);
+
+            ////var apiUri = string.Format("https://api-dev.qbranch.se/api/customers/{0}/tickets/{1}/attachments",
+            ////                           customerId, ticketId);
+
+            //var message = new HttpRequestMessage();
+            //message.RequestUri = new Uri(http);
+            ////message.Headers.Add("qnet-api-key", "7rBbXytkCFjgo+2GHu6gHyj4VVZeEaVudANlLNl4WLg=");
+            //message.Method = HttpMethod.Post;
+
+            //var content = new MultipartFormDataContent();
+            //    var fileName = Path.GetFileName(filename);
+            //    content.Add(new StreamContent(file), "video", filename);
+
+            //message.Content = content;
+
+            //using (var client = new HttpClient())
+            //{
+            //    var response = await client.SendAsync(message);
+            //    MessageBox.Show(response.ToString());
+            //    //return response.StatusCode;
+            //}
+            //-----------------------------------------------------------------------------------------------------------------
+            //{
+            //    using (var client = new HttpClient())
+            //    {
+            //        using (var stream = File.OpenRead(filename))
+            //        {
+            //            var content = new MultipartFormDataContent();
+            //            var file_content = new ByteArrayContent(new StreamContent(stream).ReadAsByteArrayAsync().Result);
+            //            file_content.Headers.ContentType = new MediaTypeHeaderValue("video/mp4");
+            //            //file_content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+            //            //{
+            //            //    FileName = "screenshot.png",
+            //            //    Name = "foo",
+            //            //};
+            //            content.Add(file_content);
+            //            //client.BaseAddress = new Uri(http);
+            //            var response = await client.PostAsync(http, content);
+            //            MessageBox.Show(response.ToString());
+
+            //        }
+            //    }
+            //}
+
+            //------------------------------------------------------------------------------------------------------
+            //using (var client = new HttpClient())
+            //using (var formData = new MultipartFormDataContent())
+            //using (var fileStream = File.OpenRead(filename))
+            //{
+            //    HttpContent fileStreamContent = new StreamContent(fileStream);
+
+            //    var filename0 = Path.GetFileName(filename);
+
+            //    // эмулируем <input type="file" name="video"/>
+            //    formData.Add(fileStreamContent, "video");
+            //    formData.Headers.Add("key", "video");
+            //    // эмулируем (action="{url}" method="post")
+            //    var response = await client.PostAsync(http, formData);
+            //    MessageBox.Show(response.ToString());
+
+            // и т. д.
+            //}
+            //------------------------------------------------------------------------------------------------------
+            FileStream stream = File.Open(filename, FileMode.Open);
+            HttpContent fileStreamContent = new StreamContent(stream);
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                //formData.Headers.Add("type","file");
+                //formData.Headers.Add("id","video");
+                formData.Add(fileStreamContent, "video",filename);
+                var response = await client.PostAsync(http, formData);
+                MessageBox.Show(response.ToString());
+            }
+            //-----------------------------------------------------------------------
+            //WebClient wc = new WebClient();
+            //Uri uri = new Uri(http);
+            //wc.Headers.Add("name", "video");
+            //wc.Headers.Add("id", "video");
+            //wc.Headers.Add("type", "file");
+            //string responce = (wc.UploadFile(uri, filename)).ToString();
+
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+    
+            private void Form1_Load(object sender, EventArgs e)
         {
             webCams = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
             for (int i = 0; i < webCams.Length; i++)
@@ -71,6 +186,7 @@ namespace WindowsFormsApp1
             }
             fourcc = FourCC.H264;
             vw = new VideoWriter(filename, backend_idx, fourcc, 30, new Size(640, 360), true);
+            video_load(@"C:\Users\kisum\Downloads\dog.mp4", @"http://127.0.0.1:8000/act");
         }
 
         private void toolStripComboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -216,7 +332,7 @@ namespace WindowsFormsApp1
             {
                 capture.Pause();
                 string filename1;
-                filename1 = $"output_{DateTime.Now.Day}_{DateTime.Now.Month}_{DateTime.Now.Year}_{DateTime.Now.Hour}_{DateTime.Now.Minute}_{DateTime.Now.Second}.mp4";
+                filename1 = $"output_{System.DateTime.Now.Day}_{System.DateTime.Now.Month}_{System.DateTime.Now.Year}_{System.DateTime.Now.Hour}_{System.DateTime.Now.Minute}_{System.DateTime.Now.Second}.mp4";
                 vw = new VideoWriter(filename1, backend_idx, fourcc, 30, new Size(640, 360), true);
                 if (filename_output != null)
                 {
